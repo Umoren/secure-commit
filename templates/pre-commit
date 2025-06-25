@@ -1,0 +1,134 @@
+#!/bin/sh
+# Secure Project - Pre-commit hook to prevent secrets
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_error() {
+    echo "${RED}❌ $1${NC}" >&2
+}
+
+log_warning() {
+    echo "${YELLOW}⚠️  $1${NC}" >&2
+}
+
+log_info() {
+    echo "${BLUE}ℹ️  $1${NC}" >&2
+}
+
+log_success() {
+    echo "${GREEN}✅ $1${NC}" >&2
+}
+
+check_for_secrets() {
+    local file="$1"
+    local found_secrets=false
+
+    if [ ! -r "$file" ]; then
+        return 0
+    fi
+
+    # Use grep directly on the file
+    if grep -q 'sk_live_[a-zA-Z0-9]\{24\}' "$file"; then
+        log_error "Stripe live API key found in $file"
+        log_warning "This exposes real payment processing!"
+        found_secrets=true
+    fi
+
+    if grep -q 'AKIA[0-9A-Z]\{16\}' "$file"; then
+        log_error "AWS Access Key found in $file"
+        log_warning "This can access your entire AWS account!"
+        found_secrets=true
+    fi
+
+    if grep -q 'sk-[a-zA-Z0-9]\{48\}' "$file"; then
+        log_error "OpenAI API key found in $file"
+        log_warning "This costs money per request!"
+        found_secrets=true
+    fi
+
+    if grep -q 'ghp_[a-zA-Z0-9]\{36\}' "$file"; then
+        log_error "GitHub Personal Access Token found in $file"
+        log_warning "This can access your repositories!"
+        found_secrets=true
+    fi
+
+    if grep -q 'mongodb://\|postgres://\|mysql://' "$file"; then
+        log_error "Database connection string found in $file"
+        log_warning "This exposes your database!"
+        found_secrets=true
+    fi
+
+    if grep -q 'AIza[0-9A-Za-z_-]\{35\}' "$file"; then
+        log_error "Google API Key found in $file"
+        found_secrets=true
+    fi
+
+    if grep -q 'sk_test_[a-zA-Z0-9]\{24\}' "$file"; then
+        log_warning "Stripe test API key found in $file"
+        log_info "Move to .env file for consistency"
+        found_secrets=true
+    fi
+
+    if [ "$found_secrets" = "true" ]; then
+        return 1
+    fi
+    return 0
+}
+
+main() {
+    log_info "Secure Project - Scanning staged files for secrets..."
+    
+    staged_files=$(git diff --cached --name-only --diff-filter=ACM)
+    
+    if [ -z "$staged_files" ]; then
+        log_info "No staged files to check"
+        exit 0
+    fi
+    
+    secrets_found=false
+    files_checked=0
+    
+    for file in $staged_files; do
+        if [ ! -f "$file" ]; then
+            continue
+        fi
+        
+        case "$file" in
+            *.js|*.ts|*.jsx|*.tsx|*.py|*.rb|*.php|*.java|*.json|*.yaml|*.yml|*.env*|*.txt|*.md|*.config)
+                files_checked=$((files_checked + 1))
+                if ! check_for_secrets "$file"; then
+                    secrets_found=true
+                fi
+                ;;
+        esac
+    done
+    
+    # Only show success if NO secrets were found
+    if [ "$secrets_found" = "true" ]; then
+        cat <<EOF
+
+❌ COMMIT BLOCKED: Secrets detected in staged files!
+
+To fix this:
+1. Move secrets to environment variables (.env file)
+2. Add .env* to your .gitignore
+3. Use process.env.YOUR_SECRET in your code
+
+If you're certain these aren't real secrets:
+- git commit --no-verify (skips this check)
+
+EOF
+        exit 1
+    else
+        if [ $files_checked -gt 0 ]; then
+            log_success "No secrets found in $files_checked staged file(s)"
+        fi
+    fi
+}
+
+main "$@"

@@ -1,0 +1,8 @@
+# Secure Project - node patterns
+.env*
+node_modules/
+.DS_Store
+npm-debug.log*
+dist/
+build/
+*.log

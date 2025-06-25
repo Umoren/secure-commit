@@ -5,6 +5,7 @@
 import { detectFramework, scanDirectory, findTrackedSensitiveFiles } from '../lib/detector.js';
 import { updateGitignore, previewGitignoreChanges, validateGitignore } from '../lib/gitignore.js';
 import { removeTrackedSensitiveFiles, previewCleanup, validateCleanupSafety } from '../lib/cleaner.js';
+import { installHooks, uninstallHooks, checkHookInstallation } from '../lib/hooks.js';
 
 function displayFindings(findings) {
     if (findings.length === 0) {
@@ -79,7 +80,7 @@ async function main() {
         // Summary
         if (!hasSecrets && !hasTrackedFiles) {
             console.log('\n🎉 Your project looks secure!');
-            console.log('💡 Run `npx secure-project init` to set up prevention hooks');
+            console.log('💡 Run `npx secure-commit install` to set up prevention hooks');
         }
 
         process.exit(hasSecrets || hasTrackedFiles ? 1 : 0);
@@ -195,19 +196,105 @@ async function main() {
                 console.log('✅ .gitignore already properly configured!');
             }
 
-            console.log('\n🚧 Git hooks setup coming soon!');
+            // Also install hooks if not already installed
+            const hookStatus = checkHookInstallation(targetDir);
+            if (!hookStatus.installed) {
+                console.log('\n🪝 Installing git hooks...');
+                try {
+                    const hookResult = installHooks(targetDir);
+                    if (hookResult.success) {
+                        console.log('✅ Git hooks installed successfully');
+                        console.log('🛡️  Your repository is now protected against secret commits');
+                    } else {
+                        console.log(`⚠️  Hook installation completed with warnings: ${hookResult.message}`);
+                    }
+                } catch (hookError) {
+                    console.error(`⚠️  Failed to install hooks: ${hookError.message}`);
+                    console.log('💡 You can try running `npx secure-commit install` separately');
+                }
+            } else {
+                console.log('\n✅ Git hooks already installed');
+            }
         } catch (error) {
             console.error(`❌ Failed to update .gitignore: ${error.message}`);
             process.exit(1);
         }
     }
+    else if (command === 'install') {
+        console.log('🪝 Installing git pre-commit hooks...\n');
+        
+        try {
+            const hookStatus = checkHookInstallation(targetDir);
+            
+            if (hookStatus.installed) {
+                console.log('✅ Git hooks are already installed');
+                console.log(`📄 Hook file: ${hookStatus.hookPath}`);
+                
+                if (hasFlag('--force')) {
+                    console.log('🔄 Reinstalling due to --force flag...');
+                } else {
+                    console.log('\n💡 Use --force to reinstall');
+                    return;
+                }
+            }
+            
+            const result = installHooks(targetDir, { force: hasFlag('--force') });
+            
+            if (result.success) {
+                console.log('✅ Git hooks installed successfully!');
+                console.log(`📄 Hook installed at: ${result.hookPath}`);
+                console.log('\n🛡️  Your repository is now protected against secret commits');
+                console.log('💡 Test it by trying to commit a file with an API key');
+            } else {
+                console.log(`⚠️  Installation completed with issues: ${result.message}`);
+                if (result.hookPath) {
+                    console.log(`📄 Hook location: ${result.hookPath}`);
+                }
+            }
+            
+        } catch (error) {
+            console.error(`❌ Failed to install hooks: ${error.message}`);
+            process.exit(1);
+        }
+    }
+    else if (command === 'uninstall') {
+        console.log('🗑️  Uninstalling git pre-commit hooks...\n');
+        
+        try {
+            const hookStatus = checkHookInstallation(targetDir);
+            
+            if (!hookStatus.installed) {
+                console.log('ℹ️  No git hooks found to uninstall');
+                return;
+            }
+            
+            const result = uninstallHooks(targetDir);
+            
+            if (result.success) {
+                console.log('✅ Git hooks uninstalled successfully');
+                console.log('ℹ️  Your repository no longer has automatic secret protection');
+            } else {
+                console.log(`⚠️  Uninstallation completed with issues: ${result.message}`);
+            }
+            
+        } catch (error) {
+            console.error(`❌ Failed to uninstall hooks: ${error.message}`);
+            process.exit(1);
+        }
+    }
     else {
         console.log('Usage:');
-        console.log('  npx secure-project scan          # Scan for secrets');
-        console.log('  npx secure-project preview       # Preview .gitignore changes');
-        console.log('  npx secure-project clean         # Remove tracked sensitive files');
-        console.log('  npx secure-project clean --preview # Preview cleanup');
-        console.log('  npx secure-project init          # Setup .gitignore');
+        console.log('  npx secure-commit scan            # Scan for secrets');
+        console.log('  npx secure-commit install         # Install git pre-commit hooks');
+        console.log('  npx secure-commit uninstall       # Remove git pre-commit hooks');
+        console.log('  npx secure-commit init            # Setup .gitignore and hooks');
+        console.log('  npx secure-commit preview         # Preview .gitignore changes');
+        console.log('  npx secure-commit clean           # Remove tracked sensitive files');
+        console.log('  npx secure-commit clean --preview # Preview cleanup');
+        console.log('');
+        console.log('Flags:');
+        console.log('  --force                           # Force reinstall/overwrite');
+        console.log('  --preview, --dry-run              # Preview changes without applying');
     }
 }
 

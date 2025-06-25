@@ -1,31 +1,55 @@
 {
-  "name": "secure-project",
-  "version": "0.1.0",
-  "description": "Simple security setup for developers - prevent secrets from leaking to git",
-  "main": "bin/cli.js",
+  "name": "secure-commit",
+  "version": "1.0.0",
+  "description": "A CLI tool to prevent secrets from being committed to Git repositories",
+  "main": "lib/index.js",
   "bin": {
-    "secure-project": "bin/cli.js"
+    "secure-commit": "./bin/cli.js"
   },
   "type": "module",
   "scripts": {
-    "test": "node bin/cli.js scan",
+    "start": "node bin/cli.js",
+    "test": "jest",
+    "lint": "eslint lib/ bin/ --ext .js",
+    "scan": "node bin/cli.js scan",
+    "install-hook": "node bin/cli.js install",
     "dev": "node bin/cli.js"
   },
   "keywords": [
-    "security",
     "git",
+    "security",
     "secrets",
-    "developer-tools",
-    "cli"
+    "pre-commit",
+    "cli",
+    "api-keys",
+    "credentials",
+    "developer-tools"
   ],
   "author": "Your Name",
   "license": "MIT",
   "engines": {
     "node": ">=14.0.0"
   },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.1.1"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "eslint": "^8.44.0"
+  },
   "files": [
     "bin/",
     "lib/",
     "templates/"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/secure-commit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/secure-commit/issues"
+  },
+  "homepage": "https://github.com/yourusername/secure-commit#readme"
 }
