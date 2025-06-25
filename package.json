@@ -4,7 +4,7 @@
   "description": "A CLI tool to prevent secrets from being committed to Git repositories",
   "main": "lib/index.js",
   "bin": {
-    "secure-commit": "./bin/cli.js"
+    "secure-commit": "bin/cli.js"
   },
   "type": "module",
   "scripts": {
@@ -46,7 +46,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Umoren/secure-commit.git"
+    "url": "git+https://github.com/Umoren/secure-commit.git"
   },
   "bugs": {
     "url": "https://github.com/Umoren/secure-commit/issues"
