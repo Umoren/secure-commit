@@ -1,0 +1,31 @@
+{
+  "name": "secure-project",
+  "version": "0.1.0",
+  "description": "Simple security setup for developers - prevent secrets from leaking to git",
+  "main": "bin/cli.js",
+  "bin": {
+    "secure-project": "bin/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node bin/cli.js scan",
+    "dev": "node bin/cli.js"
+  },
+  "keywords": [
+    "security",
+    "git",
+    "secrets",
+    "developer-tools",
+    "cli"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "templates/"
+  ]
+}
