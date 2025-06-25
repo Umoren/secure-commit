@@ -108,10 +108,6 @@ The tool works without configuration, but you can customize:
 - Node.js 14+
 - Git repository
 
-## Contributing
-
-Contributions welcome! Please read our contributing guidelines.
-
 ## License
 
-MIT © Your Name
+MIT © Samuel Umoren

@@ -25,7 +25,7 @@
     "credentials",
     "developer-tools"
   ],
-  "author": "Your Name",
+  "author": "Samuel Umoren",
   "license": "MIT",
   "engines": {
     "node": ">=14.0.0"
@@ -46,10 +46,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/secure-commit.git"
+    "url": "https://github.com/Umoren/secure-commit.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/secure-commit/issues"
+    "url": "https://github.com/Umoren/secure-commit/issues"
   },
-  "homepage": "https://github.com/yourusername/secure-commit#readme"
+  "homepage": "https://github.com/Umoren/secure-commit#readme"
 }
